@@ -1,5 +1,6 @@
 # ----------------------------------------------------------------------------
-# OBJECTIU: Filtra incidències per prioritat d'1 a 4 i les mostra una a una
+# OBJECTIU: Filtra incidències per prioritat d'1 a 4, les mostra una a una (paginació),
+#           i desa el resultat en un fitxer JSON (sempre sobreescrivint l'anterior).
 # ----------------------------------------------------------------------------
 
 # ================================
@@ -8,6 +9,7 @@
 
 import xml.etree.ElementTree as ET  # Per llegir i parsejar XML.
 import os  # Per comprovar l'existència del fitxer.
+import json  # Per guardar les dades en format JSON.
 from colorama import Fore, Style, init  # Per afegir colors a la consola.
 
 # Inicialitza colorama.
@@ -17,22 +19,56 @@ init(autoreset=True)
 # === SECCIÓ 2: CONFIGURACIÓ DE CONSTANTS ===
 # ================================
 
-XML_FILE = 'incidencies.xml'  # Fitxer de dades.
+XML_FILE = 'incidencies.xml'  # Fitxer de dades XML.
+JSON_FILE = 'incidencies.json'  # Fitxer de dades JSON.
 RECORD_TAG = 'Incidencia'  # Etiqueta principal de cada registre.
 CAMPO_PRIORIDAD = 'Prioritat_de_lincidncia'  # Etiqueta amb el valor de la prioritat.
 FIELD_SEPARATOR = '-'  # Separador visual per als camps.
 
 # ---------------------------------------------
+# ================================
+# === FUNCIONS D'EMMAGATZEMATGE JSON (MÉS SIMPLE) ===
+# ================================
+
+def xml_to_dict(registre):
+    # Converteix un element XML d'incidència a un diccionari,
+    # preparant-lo per a ser guardat en JSON.
+    incidencia_dict = {}
+    for camp in registre.iter():
+        if camp.text and camp.tag != RECORD_TAG:
+            incidencia_dict[camp.tag] = camp.text.strip()
+    return incidencia_dict
+
+def emmagatzemar_json(registres_filtrats_xml):
+    """
+    Guarda el llistat d'incidències en el fitxer JSON_FILE,
+    sobreescrivint sempre el contingut anterior.
+    """
+    # 1. Converteix els registres XML a diccionaris.
+    noves_incidencies = [xml_to_dict(registre) for registre in registres_filtrats_xml]
+
+    if not noves_incidencies:
+        print(Fore.YELLOW + "\n[JSON] No hi ha incidències per desar." + Style.RESET_ALL)
+        return
+
+    # 2. Desament final (mode 'w' sobreescriu).
+    try:
+        with open(JSON_FILE, 'w', encoding='utf-8') as f:
+            json.dump(noves_incidencies, f, indent=4, ensure_ascii=False)
+        print(Fore.GREEN + f"\n[JSON] Dades desades amb èxit a '{JSON_FILE}' (Fitxer sobreescrit)." + Style.RESET_ALL)
+    except Exception as e:
+        print(Fore.RED + f"\n[ERROR JSON] Error al desar el fitxer: {e}" + Style.RESET_ALL)
+
+
+# ---------------------------------------------
 
 def executar_filtre_prioritat(fitxer_xml):
-
     # ================================
     # === SECCIÓ 3: COMPROVACIÓ D'ARXIU ===
     # ================================
 
     if not os.path.exists(fitxer_xml):
-        # Error si l'XML no es troba.
-        print("=" * 60, f"\nERROR: Fitxer '{fitxer_xml}' no trobat.", "\n" + "=" * 60)
+        print(Fore.RED + "=" * 60, f"\nERROR: Fitxer '{fitxer_xml}' no trobat.", "\n" + "=" * 60 + Style.RESET_ALL)
         return
 
     try:
@@ -55,16 +91,16 @@ def executar_filtre_prioritat(fitxer_xml):
             prioritat_input = input("Introdueix la prioritat numèrica de l'1 al 4: ").strip()
 
             if not prioritat_input:
-                return print("\nEl programa ha terminat. Torna a executar-lo per utilitzar-lo.")
+                return print("\nEl programa ha terminat. Adéu!")
 
             try:
                 p_int = int(prioritat_input)
                 if 1 <= p_int <= 4:
                     prioritat_nombre = p_int
                 else:
-                    print("\n⚠️ Si us plau, introdueix un nombre entre 1 i 4.\n")
+                    print(Fore.YELLOW + "\n⚠️ Si us plau, introdueix un nombre entre 1 i 4.\n" + Style.RESET_ALL)
             except ValueError:
-                print("\n⚠️ Entrada no vàlida. Introdueix un nombre enter.\n")
+                print(Fore.YELLOW + "\n⚠️ Entrada no vàlida. Introdueix un nombre enter.\n" + Style.RESET_ALL)
 
         valor_cercat_str = str(prioritat_nombre)
         etiqueta_cerca = f"prioritat de nivell {valor_cercat_str}"
@@ -91,11 +127,11 @@ def executar_filtre_prioritat(fitxer_xml):
         if comptador == 0:
             print(f"🚫 No s'han trobat registres amb {etiqueta_cerca}.")
         else:
-            print(Fore.LIGHTRED_EX + f"S'han trobat {comptador} incidències amb {etiqueta_cerca}.")
+            print(Fore.LIGHTRED_EX + f"S'han trobat {comptador} incidències amb {etiqueta_cerca}." + Style.RESET_ALL)
         print(Fore.RED + "=" * 55 + Style.RESET_ALL)
 
         # ================================
-        # === SECCIÓ 7: VISUALITZACIÓ PAGINADA ===
+        # === SECCIÓ 7: VISUALITZACIÓ PAGINADA (PAS A PAS) ===
         # ================================
 
         if comptador > 0:
@@ -106,8 +142,8 @@ def executar_filtre_prioritat(fitxer_xml):
                 prompt_text = "Prem enter per veure la primera incidència:" if i == 0 else "\nPrem enter per veure la següent incidència:"
                 input(Fore.LIGHTGREEN_EX + prompt_text + Style.RESET_ALL)
 
-                # Capçalera de la incidència (amb color GROC CLAR).
-                print(f"\n{Fore.LIGHTYELLOW_EX}✅ Incidència {i + 1} de {comptador} :{Style.RESET_ALL}\n")
+                # Capçalera de la incidència.
+                print(Fore.LIGHTYELLOW_EX + f"\n✅ Incidència {i + 1} de {comptador}:\n" + Style.RESET_ALL)
 
                 # Itera i imprimeix tots els camps amb format.
                 for camp in registre.iter():
@@ -116,8 +152,16 @@ def executar_filtre_prioritat(fitxer_xml):
                         print(f"  {FIELD_SEPARATOR} {camp.tag:<30}: {camp.text.strip()}")
 
             # Fi de la llista.
-            print(Fore.LIGHTRED_EX + "\n" + "-" * 60)
-            print("\nFi de la llista d'incidències." + Style.RESET_ALL)
+            print(Fore.BLUE + "-" * 35 + Style.RESET_ALL)
+            print(Fore.LIGHTRED_EX + "\nFi de la llista d'incidències." + Style.RESET_ALL)
+
+
+        # ================================
+        # === SECCIÓ 7.5: EMMAGATZEMATGE EN JSON ===
+        # ================================
+
+        if comptador > 0:
+            emmagatzemar_json(registres_trobats)
 
         print("\nPrograma finalitzat!")
 
@@ -126,9 +170,10 @@ def executar_filtre_prioritat(fitxer_xml):
     # ================================
 
     except ET.ParseError as e:
-        print(f"\nERROR en llegir l'XML: El fitxer està mal format. Detall: {e}")
+        print(Fore.RED + f"\nERROR en llegir l'XML: El fitxer està mal format. Detall: {e}" + Style.RESET_ALL)
     except Exception as e:
-        print(f"\nERROR inesperat: {e}")
+        print(Fore.RED + f"\nERROR inesperat: {e}" + Style.RESET_ALL)
+
 
 # ================================
 # === SECCIÓ 9: PUNT D'EXECUCIÓ ===
