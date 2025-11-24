@@ -2,9 +2,7 @@
 # OBJECTIU: Filtra incidències per prioritat d'1 a 4 i les mostra una a una
 # ----------------------------------------------------------------------------
 
-# ================================
 # === SECCIÓ 1: IMPORTACIONS ESSENCIALS ===
-# ================================
 
 import xml.etree.ElementTree as ET  # Per llegir i parsejar XML.
 import os  # Per comprovar l'existència del fitxer.
@@ -13,9 +11,7 @@ from colorama import Fore, Style, init  # Per afegir colors a la consola.
 # Inicialitza colorama.
 init(autoreset=True)
 
-# ================================
 # === SECCIÓ 2: CONFIGURACIÓ DE CONSTANTS ===
-# ================================
 
 XML_FILE = 'incidencies.xml'  # Fitxer de dades.
 RECORD_TAG = 'Incidencia'  # Etiqueta principal de cada registre.
@@ -26,9 +22,7 @@ FIELD_SEPARATOR = '-'  # Separador visual per als camps.
 
 def executar_filtre_prioritat(fitxer_xml):
 
-    # ================================
     # === SECCIÓ 3: COMPROVACIÓ D'ARXIU ===
-    # ================================
 
     if not os.path.exists(fitxer_xml):
         # Error si l'XML no es troba.
@@ -45,17 +39,15 @@ def executar_filtre_prioritat(fitxer_xml):
         print(" Prioritat: 1 = Baixa, 4 = Urgent ")
         print(Fore.CYAN + "-" * 50 + Style.RESET_ALL)
 
-        # ================================
         # === SECCIÓ 4: VALIDACIÓ I OBTENCIÓ DE LA PRIORITAT ===
-        # ================================
 
         prioritat_nombre = None
         # Bucle: Assegura que l'entrada sigui 1, 2, 3 o 4.
         while prioritat_nombre is None:
-            prioritat_input = input("Introdueix la prioritat numèrica de l'1 al 4: ").strip()
+            prioritat_input = input("\n Introdueix la prioritat numèrica de l'1 al 4:\n").strip()
 
             if not prioritat_input:
-                return print("\nEl programa ha terminat. Torna a executar-lo per utilitzar-lo.")
+                return print("\n El programa ha terminat. Torna a executar-lo per utilitzar-lo.")
 
             try:
                 p_int = int(prioritat_input)
@@ -69,9 +61,7 @@ def executar_filtre_prioritat(fitxer_xml):
         valor_cercat_str = str(prioritat_nombre)
         etiqueta_cerca = f"prioritat de nivell {valor_cercat_str}"
 
-        # ================================
         # === SECCIÓ 5: FILTRATGE DE REGISTRES (LIST COMPREHENSION) ===
-        # ================================
 
         registres_trobats = [
             registre
@@ -83,31 +73,27 @@ def executar_filtre_prioritat(fitxer_xml):
 
         comptador = len(registres_trobats)
 
-        # ================================
         # === SECCIÓ 6: RESUM DE RESULTATS ===
-        # ================================
 
         print(Fore.RED + "\n" + "=" * 55)
         if comptador == 0:
-            print(f"🚫 No s'han trobat registres amb {etiqueta_cerca}.")
+            print(f" 🚫 No s'han trobat registres amb {etiqueta_cerca}.")
         else:
-            print(Fore.LIGHTRED_EX + f"S'han trobat {comptador} incidències amb {etiqueta_cerca}.")
+            print(Fore.LIGHTRED_EX + f" S'han trobat {comptador} incidències amb {etiqueta_cerca}.")
         print(Fore.RED + "=" * 55 + Style.RESET_ALL)
 
-        # ================================
         # === SECCIÓ 7: VISUALITZACIÓ PAGINADA ===
-        # ================================
 
         if comptador > 0:
-            print("\nIniciant visualització d'incidencies una a una:\n")
+            print("\n Iniciant visualització d'incidencies una a una:\n")
 
             for i, registre in enumerate(registres_trobats):
                 # Pausa: Espera la tecla Enter.
-                prompt_text = "Prem enter per veure la primera incidència:" if i == 0 else "\nPrem enter per veure la següent incidència:"
+                prompt_text = " Prem enter per veure la primera incidència\n" if i == 0 else "\n Prem enter per veure la següent incidència\n"
                 input(Fore.LIGHTGREEN_EX + prompt_text + Style.RESET_ALL)
 
                 # Capçalera de la incidència (amb color GROC CLAR).
-                print(f"\n{Fore.LIGHTYELLOW_EX}✅ Incidència {i + 1} de {comptador} :{Style.RESET_ALL}\n")
+                print(f"\n{Fore.LIGHTYELLOW_EX} ✅ Incidència {i + 1} de {comptador} :{Style.RESET_ALL}\n")
 
                 # Itera i imprimeix tots els camps amb format.
                 for camp in registre.iter():
@@ -117,22 +103,18 @@ def executar_filtre_prioritat(fitxer_xml):
 
             # Fi de la llista.
             print(Fore.LIGHTRED_EX + "\n" + "-" * 60)
-            print("\nFi de la llista d'incidències." + Style.RESET_ALL)
+            print("\n Fi de la llista d'incidències." + Style.RESET_ALL)
 
-        print("\nPrograma finalitzat!")
+        print("\n Programa finalitzat!")
 
-    # ================================
     # === SECCIÓ 8: GESTIÓ D'EXCEPCIONS ===
-    # ================================
 
     except ET.ParseError as e:
-        print(f"\nERROR en llegir l'XML: El fitxer està mal format. Detall: {e}")
+        print(f"\n ERROR en llegir l'XML: El fitxer està mal format. Detall: {e}")
     except Exception as e:
-        print(f"\nERROR inesperat: {e}")
+        print(f"\n ERROR inesperat: {e}")
 
-# ================================
 # === SECCIÓ 9: PUNT D'EXECUCIÓ ===
-# ================================
 
 # Crida la funció principal.
 if __name__ == "__main__":
